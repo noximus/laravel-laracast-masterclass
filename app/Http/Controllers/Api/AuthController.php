@@ -15,6 +15,7 @@ class AuthController extends Controller
 
     // creates an instance of LoginUserRequest and validates the request
     public function login(LoginUserRequest $request) {
+        
         // this checks to make sure the incoming request adheres to the defined validation rules
         $request->validated($request->all());
 
