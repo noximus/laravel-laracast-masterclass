@@ -17,10 +17,12 @@ class DatabaseSeeder extends Seeder
         \App\Models\Ticket::factory(100)
             ->recycle($users)
             ->create();
-        
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+
+        \App\Models\User::create([
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+            'name' => 'The Manager',
+            'is_manager' => true,
+        ]);
     }
 }
