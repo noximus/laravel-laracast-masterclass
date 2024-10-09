@@ -22,7 +22,10 @@ class UpdateUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'data.attributes.name' => 'sometimes|string',
+            'data.attributes.email' => 'sometimes|email',
+            'data.attributes.isManager' => 'sometimes|boolean',
+            'data.attributes.password' => 'sometimes|string',
         ];
     }
 }
