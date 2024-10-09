@@ -9,6 +9,7 @@ use App\Http\Requests\Api\V1\StoreTicketRequest;
 use App\Http\Requests\Api\V1\UpdateTicketRequest;
 use App\Http\Resources\V1\TicketResource;
 use App\Models\Ticket;
+use App\Models\User;
 use App\Policies\V1\TicketPolicy;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -26,73 +27,42 @@ class AuthorTicketsController extends ApiController
         );
     }
     // Create ticket POST
-    public function store(StoreTicketRequest $request, $author_id)
+    public function store(StoreTicketRequest $request, User $author)
     {
-
         if ($this->isAble('store', Ticket::class)) {
-            return new TicketResource(
-                Ticket::create(
-                    $request->mappedAttributes([
-                        'author' => 'user_id'
-                    ])
-                )
-            );
+            return new TicketResource(Ticket::create($request->mappedAttributes([
+                'author' => $author->id
+            ])));
         }
-        return $this->error('You are not authroized to create that resource', 401);
+        return $this->notAuthorized('You are not authroized to create that resource');
     }
     // Replace ticket PUT
-    public function replace(ReplaceTicketRequest $request, $author_id,  $ticket_id)
+    public function replace(ReplaceTicketRequest $request, $author_id,  Ticket $ticket)
     {
-        try {
-            $ticket = Ticket::where('id', $ticket_id)
-                ->where('user_id', $author_id)
-                ->firstOrFail();
-
-            if ($this->isAble('replace', $ticket)) {
-                $ticket->update($request->mappedAttributes());
-                return new TicketResource($ticket);
-            }
-            return $this->error('You are not authorized to replace that resource', 401);
-
-        } catch (ModelNotFoundException $ex) {
-            return $this->error('Ticket cannot be found.', 404);
+        if ($this->isAble('replace', $ticket)) {
+            $ticket->update($request->mappedAttributes());
+            return new TicketResource($ticket);
         }
+        return $this->notAuthorized('You are not authorized to replace that resource');
     }
     // Update ticket PATCH
-    public function update(UpdateTicketRequest $request, $author_id,  $ticket_id)
+    public function update(UpdateTicketRequest $request, $author_id,  Ticket $ticket)
     {
-        try {
-            $ticket = Ticket::where('id', $ticket_id)
-                ->where('user_id', $author_id)
-                ->firstOrFail();
+        if ($this->isAble('update', $ticket)) {
+            $ticket->update($request->mappedAttributes());
 
-            if ($this->isAble('update', $ticket)) {
-                $ticket->update($request->mappedAttributes());
-
-                return new TicketResource($ticket);
-            }
-            return $this->error('You are not authroized to update that resource', 401);
-
-        } catch (ModelNotFoundException $ex) {
-            return $this->error('Ticket cannot be found.', 404);
+            return new TicketResource($ticket);
         }
+        return $this->notAuthorized('You are not authroized to update that resource');
     }
     // DELETE
-    public function destroy($author_id, $ticket_id)
+    public function destroy($author_id, Ticket $ticket)
     {
-        try {
-            $ticket = Ticket::where('id', $ticket_id)
-                ->where('user_id', $author_id)
-                ->firstOrFail();
+        if ($this->isAble('delete', $ticket)) {
+            $ticket->delete();
 
-            if ($this->isAble('delete', $ticket)) {
-                $ticket->delete();
-
-                return $this->ok('Ticket successfully deleted');
-            }
-            return $this->error('You are not authroized to delete that resource', 401);
-        } catch (ModelNotFoundException $ex) {
-            return $this->error('Ticket cannot found.', 404);
+            return $this->ok('Ticket successfully deleted');
         }
+        return $this->notAuthorized('You are not authroized to delete that resource');
     }
 }
