@@ -20,11 +20,10 @@ class TicketController extends ApiController
     {
         return TicketResource::collection(Ticket::filter($filters)->paginate());
     }
-    // Create POST
+    // Create Ticket POST
     public function store(StoreTicketRequest $request)
     {
         try {
-            // policy
             $this->isAble('store', Ticket::class);
 
             return new TicketResource(Ticket::create($request->mappedAttributes()));
@@ -51,12 +50,13 @@ class TicketController extends ApiController
     // PATCH
     public function update(UpdateTicketRequest $request, $ticket_id)
     {
-        // PATCH
         try {
             $ticket = Ticket::findOrFail($ticket_id);
-            // policy
+
             $this->isAble('update', $ticket);
+
             $ticket->update($request->mappedAttributes());
+
             return new TicketResource($ticket);
         } catch (ModelNotFoundException $exception) {
             return $this->error('Ticket cannot be found.', 404);
@@ -67,12 +67,13 @@ class TicketController extends ApiController
     // PUT
     public function replace(ReplaceTicketRequest $request, $ticket_id)
     {
-        // PUT
         try {
             $ticket = Ticket::findOrFail($ticket_id);
-            // policy
+
             $this->isAble('replace', $ticket);
+
             $ticket->update($request->mappedAttributes());
+
             return new TicketResource($ticket);
         } catch (ModelNotFoundException $exception) {
             return $this->error('Ticket cannot be found.', 404);
@@ -83,8 +84,9 @@ class TicketController extends ApiController
     {
         try {
             $ticket = Ticket::findOrFail($ticket_id);
-            // policy
+
             $this->isAble('delete', $ticket);
+
             $ticket->delete();
 
             return $this->ok('Ticket successfully deleted');
