@@ -11,29 +11,50 @@ use App\Http\Resources\V1\UserResource;
 use App\Policies\V1\UserPolicy;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Auth;
 
 class UserController extends ApiController
 {
     protected $policyClass = UserPolicy::class;
+    /**
+     * Get all users
+     * 
+     * @group Managing Users
+     * 
+     * @queryParam sort string Data field(s) to sort by. Separate multiple fields with commas. Denote descending sort with a minus sign. Example: sort=name
+     * @queryParam filter[name] Filter by status name. Wildcards are supported. No-example
+     * @queryParam filter[email] Filter by email. Wildcards are supported. No-example
+     * 
+     */
     public function index(AuthorFilter $filters)
     {
         return UserResource::collection(
             User::filter($filters)->paginate()
         );
     }
-    // Create User POST
+
+    /**
+     * Create a user
+     * 
+     * @group Managing Users
+     * 
+     * @response 200 {"data":{"type":"user","id":16,"attributes":{"name":"My User","email":"user@user.com","isManager":false},"links":{"self":"http:\/\/localhost:8000\/api\/v1\/authors\/16"}}}
+     */
     public function store(StoreUserRequest $request)
     {
-        try {
-            $this->isAble('store', User::class);
-
+        if ($this->isAble('store', User::class)) {
             return new UserResource(User::create($request->mappedAttributes()));
-        } catch (AuthorizationException $ex) {
-            return $this->error('You are not authroized to create that resource', 401);
         }
+
+        return $this->notAuthorized('You are not authorized to create that resource');
     }
 
+    /**
+     * Display a user
+     * 
+     * @group Managing Users
+     * 
+     * 
+     */
     public function show(User $user)
     {
         if ($this->include('tickets')) {
@@ -42,51 +63,59 @@ class UserController extends ApiController
 
         return new UserResource($user);
     }
-    // Update User PATCH
-    public function update(UpdateUserRequest $request, $user_id)
+
+    /**
+     * Update a user
+     * 
+     * @group Managing Users
+     * 
+     * @response 200 {"data":{"type":"user","id":16,"attributes":{"name":"My User","email":"user@user.com","isManager":false},"links":{"self":"http:\/\/localhost:8000\/api\/v1\/authors\/16"}}}
+     */
+    public function update(UpdateUserRequest $request, User $user)
     {
-        try {
-            $user = User::findOrFail($user_id);
-
-            $this->isAble('update', $user);
-
+        if ($this->isAble('update', $user)) {
             $user->update($request->mappedAttributes());
 
             return new UserResource($user);
-        } catch (ModelNotFoundException $exception) {
-            return $this->error('Ticket cannot be found.', 404);
-        } catch (AuthorizationException $ex) {
-            return $this->error('You are not authorized to update that resource', 401);
         }
+
+        return $this->notAuthorized('You are not authorized to update that resource');
     }
-    // Replace User PUT
-    public function replace(ReplaceUserRequest $request, $user_id)
+
+    /**
+     * Replace a user
+     * 
+     * @group Managing Users
+     * 
+     * @response 200 {"data":{"type":"user","id":16,"attributes":{"name":"My User","email":"user@user.com","isManager":false},"links":{"self":"http:\/\/localhost:8000\/api\/v1\/authors\/16"}}}
+     */
+    public function replace(ReplaceUserRequest $request, User $user)
     {
-        try {
-            $user = User::findOrFail($user_id);
-
-            $this->isAble('replace', $user);
-
+        // PUT
+        if ($this->isAble('replace', $user)) {
             $user->update($request->mappedAttributes());
 
             return new UserResource($user);
-        } catch (ModelNotFoundException $exception) {
-            return $this->error('User cannot be found.', 404);
         }
+
+        return $this->notAuthorized('You are not authorized to update that resource');
     }
-    // DELETE
-    public function destroy($user_id)
+
+    /**
+     * Delete a user
+     * 
+     * @group Managing Users
+     * 
+     * @response 200 {}
+     */
+    public function destroy(User $user)
     {
-        try {
-            $user = User::findOrFail($user_id);
-
-            $this->isAble('delete', $user);
-
+        if ($this->isAble('delete', $user)) {
             $user->delete();
 
             return $this->ok('User successfully deleted');
-        } catch (ModelNotFoundException $exception) {
-            return $this->error('User cannot found.', 404);
         }
+
+        return $this->notAuthorized('You are not authorized to delete that resource');
     }
 }

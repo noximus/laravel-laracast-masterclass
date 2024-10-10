@@ -7,26 +7,34 @@ use App\Models\User;
 use App\Http\Requests\Api\V1\StoreUserRequest;
 use App\Http\Requests\Api\V1\UpdateUserRequest;
 use App\Http\Resources\V1\UserResource;
-use Illuminate\Support\Facades\Auth;
 
 class AuthorsController extends ApiController
 {
+    /**
+     * Get authors.
+     * 
+     * Retrieves all users that created a ticket.
+     * 
+     * @group Showing Authors
+     */
     public function index(AuthorFilter $filters)
     {
         return UserResource::collection(
             User::select('users.*')
-            ->join('tickets', 'user.id', '=', 'tickets.user_id')
-            ->filter($filters)
+                ->join('tickets', 'users.id', '=', 'tickets.user_id')
+                ->filter($filters)
                 ->distinct()
                 ->paginate()
         );
     }
 
-    public function store(StoreUserRequest $request)
-    {
-        //
-    }
-
+    /**
+     * Get an author.
+     * 
+     * Retrieves all users that created a ticket.
+     * 
+     * @group Showing Authors
+     */
     public function show(User $author)
     {
         if ($this->include('tickets')) {
@@ -34,15 +42,5 @@ class AuthorsController extends ApiController
         }
 
         return new UserResource($author);
-    }
-
-    public function update(UpdateUserRequest $request, User $user)
-    {
-        //
-    }
-
-    public function destroy(User $user)
-    {
-        //
     }
 }

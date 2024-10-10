@@ -3,50 +3,70 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Traits\ApiResponses;
 use App\Http\Requests\Api\LoginUserRequest;
 use App\Models\User;
 use App\Permissions\V1\Abilities;
+use App\Traits\ApiResponses;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     use ApiResponses;
 
-    public function login(LoginUserRequest $request) {
-        
-        // 1. validate the request
+
+    /**
+     * Login
+     * 
+     * Authenticates the user and returns the user's API token.
+     * 
+     * @unauthenticated
+     * @group Authentication
+     * @response 200 {
+    "data": {
+        "token": "{YOUR_AUTH_KEY}"
+    },
+    "message": "Authenticated",
+    "status": 200
+}
+     */
+    public function login(LoginUserRequest $request)
+    {
         $request->validated($request->all());
 
-        // 2. check if the user exists
-        if(!Auth::attempt($request->only('email', 'password'))) {
+        if (!Auth::attempt($request->only('email', 'password'))) {
             return $this->error('Invalid credentials', 401);
         }
 
-        // 3. if valid create user from data.
         $user = User::firstWhere('email', $request->email);
 
-        // 4. return a token for the user
         return $this->ok(
             'Authenticated',
             [
                 'token' => $user->createToken(
-                    'auth_token for ' . $user->email,
-                    Abilities::getAbillities($user),
+                    'API token for ' . $user->email,
+                    Abilities::getAbilities($user),
                     now()->addMonth()
                 )->plainTextToken
             ]
         );
     }
 
-    public function register() {
-        return $this->ok('Register successful');
-    }
-
-    public function logout(Request $request) {
-        // removes the current users session token
+    /**
+     * Logout
+     * 
+     * Signs out the user and destroy's the API token.
+     * 
+     * @group Authentication
+     * @response 200 {}
+     */
+    public function logout(Request $request)
+    {
         $request->user()->currentAccessToken()->delete();
-        return $this->ok('Logged out successfully');
+
+        return $this->ok('');
     }
 }
